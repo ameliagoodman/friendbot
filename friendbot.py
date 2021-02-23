@@ -147,6 +147,6 @@ def get_gif():
     return gif_URL
 
 
-def __init__():
+def main():
     schedule.every().wednesday.at("09:00").do(monday)
     schedule.every().wednesday.at("10:00").do(matchmaker)
