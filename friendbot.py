@@ -1,4 +1,6 @@
 import os
+from datetime import date
+import time
 import json
 import requests
 import random
@@ -148,6 +150,13 @@ def get_gif():
 
 
 def main():
-    schedule.every().tuesday.at("15:20").do(monday)
-    schedule.every().tuesday.at("15:30").do(matchmaker)
+    print("IN MAIN")
+    if date.today().weekday() == 1:
+        print('its tues!!!')
+        monday()
+        print('boutta sleep')
+        time.sleep(3600)
+        print('nah im up')
+        matchmaker()
+    
     return "Hello, friendbot!"
