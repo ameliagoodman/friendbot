@@ -148,5 +148,6 @@ def get_gif():
 
 
 def main():
-    schedule.every().wednesday.at("09:00").do(monday)
-    schedule.every().wednesday.at("10:00").do(matchmaker)
+    schedule.every().tuesday.at("15:20").do(monday)
+    schedule.every().tuesday.at("15:30").do(matchmaker)
+    return "Hello, friendbot!"
