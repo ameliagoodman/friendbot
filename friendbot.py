@@ -14,7 +14,8 @@ match_bbs = set()
 @app.route('/make-friends', methods=['GET', 'POST'])
 def monday():
     match_bbs.clear()
-    print("just checking empty matches: " + match_bbs)
+    print("just checking empty matches: ")
+    print(match_bbs)
     slack_payload = { "blocks": [
 		    {
                 "type": "section",
@@ -52,7 +53,7 @@ def monday():
     }
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
     r = requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
-    print("send init msg response: " + r.json)
+    print("send init msg response: " + r.status_code)
     return 'Hello, Bot!'
 
 @app.route('/enroll', methods=['GET', 'POST'])
@@ -70,7 +71,8 @@ def enroll():
         send_back = {"text": "No worries. I'll check back in next week 🥰"}
     send_back['response_type'] = "ephemeral"
     r = requests.post(data['response_url'], json=send_back)
-    print("send ack response json: " + r.json)
+    print("send ack response json: ")
+    print(r.json)
     print("send ack response code: " + r.status_code)
     return 'enrolled'
 
@@ -78,9 +80,11 @@ emojis = [":star_cat: :sunglassesdog:", ":starspin: :rainbow2:", ":heart_face: :
 
 @app.route('/make-matches', methods=['GET', 'POST'])
 def matchmaker():
-    print("Make matches for:\n" + match_bbs)
+    print("Make matches for:")
+    print(match_bbs)
     random_match_bbs = list(match_bbs)
-    print("randomized list:\n" + random_match_bbs)
+    print("randomized list:")
+    print(random_match_bbs)
     random.shuffle(random_match_bbs)
     random.shuffle(emojis)
     matches = []
