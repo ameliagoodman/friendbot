@@ -152,7 +152,7 @@ def get_gif():
 @app.route('/')
 def main():
     print("IN MAIN")
-    if date.today().weekday() == 1:
+    if date.today().weekday() == 2:
         print('its tues!!!')
         monday()
         print('boutta sleep')
