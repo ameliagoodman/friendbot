@@ -50,7 +50,7 @@ def monday():
         ]
     }
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
+    # requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
     return 'Hello, Bot!'
 
 @app.route('/enroll', methods=['GET', 'POST'])
@@ -136,7 +136,7 @@ def matchmaker():
     }
 
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    requests.post(FRIENDBOT_CHANNEL, json=send_matches)
+    # requests.post(FRIENDBOT_CHANNEL, json=send_matches)
     return "matches made"     
 
 
@@ -149,14 +149,15 @@ def get_gif():
     return gif_URL
 
 
+@app.route('/')
 def main():
     print("IN MAIN")
     if date.today().weekday() == 1:
         print('its tues!!!')
         monday()
         print('boutta sleep')
-        time.sleep(3600)
-        print('nah im up')
+        time.sleep(5)
+        print('nah jk im up')
         matchmaker()
     
     return "Hello, friendbot!"
