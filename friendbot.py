@@ -14,6 +14,7 @@ match_bbs = set()
 @app.route('/make-friends', methods=['GET', 'POST'])
 def monday():
     match_bbs.clear()
+    print("just checking empty matches: " + match_bbs)
     slack_payload = { "blocks": [
 		    {
                 "type": "section",
@@ -50,7 +51,8 @@ def monday():
         ]
     }
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
+    r = requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
+    print("send init msg response: " + r.json)
     return 'Hello, Bot!'
 
 @app.route('/enroll', methods=['GET', 'POST'])
@@ -68,14 +70,17 @@ def enroll():
         send_back = {"text": "No worries. I'll check back in next week 🥰"}
     send_back['response_type'] = "ephemeral"
     r = requests.post(data['response_url'], json=send_back)
-    print(r.status_code)
+    print("send ack response json: " + r.json)
+    print("send ack response code: " + r.status_code)
     return 'enrolled'
 
 emojis = [":star_cat: :sunglassesdog:", ":starspin: :rainbow2:", ":heart_face: :heart_eyes_cat:", ":cow: :cowboy:",":garfield_sunglasses: :odie:", ":leftshark-401: :dancingpenguin:"]
 
 @app.route('/make-matches', methods=['GET', 'POST'])
 def matchmaker():
+    print("Make matches for:\n" + match_bbs)
     random_match_bbs = list(match_bbs)
+    print("randomized list:\n" + random_match_bbs)
     random.shuffle(random_match_bbs)
     random.shuffle(emojis)
     matches = []
@@ -102,6 +107,7 @@ def matchmaker():
         match_msg = match_msg + match_str[:len(match_str) - 3] + "\n"
         count += 1
 
+    print("Matches made!\n" + match_msg)
     gif = get_gif()
     send_matches = { "blocks": [
             {
@@ -136,7 +142,9 @@ def matchmaker():
     }
 
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    requests.post(FRIENDBOT_CHANNEL, json=send_matches)
+    r = requests.post(FRIENDBOT_CHANNEL, json=send_matches)
+    print("response code: " + r.status_code) 
+    print("response json: " + r.json)
     return "matches made"     
 
 
@@ -150,7 +158,7 @@ def get_gif():
         gif_URL = giphy_response.get('data', default_friends)[0].get('images', default_friends).get('downsized', default_friends).get('url', default_friends)
     except AttributeError:
         gif_URL = default_friends
-    return gif_URL
+    return gif_URL  
 
 
 @app.route('/')
@@ -159,7 +167,7 @@ def main():
         print('its game time!!!')
         monday()
         print('quick nap')
-        time.sleep(7200) # wait two hours
+        time.sleep(1800) # wait half hour
         print('back at em')
         matchmaker()
     return "Hello, friendbot!"
