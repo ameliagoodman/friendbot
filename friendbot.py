@@ -50,7 +50,7 @@ def monday():
         ]
     }
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    # requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
+    requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
     return 'Hello, Bot!'
 
 @app.route('/enroll', methods=['GET', 'POST'])
@@ -136,7 +136,7 @@ def matchmaker():
     }
 
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    # requests.post(FRIENDBOT_CHANNEL, json=send_matches)
+    requests.post(FRIENDBOT_CHANNEL, json=send_matches)
     return "matches made"     
 
 
@@ -145,21 +145,23 @@ def get_gif():
     giphy_payload = {'api_key': API_KEY, 'q': 'friendship', 'limit': 1, 'rating': 'g'}
     giphy_request = requests.get('http://api.giphy.com/v1/gifs/search', params=giphy_payload)
     giphy_response = giphy_request.json()
-    gif_URL = giphy_response.get('data', ['https://giphy.com/gifs/pokemon-friendship-high-five-10LKovKon8DENq'])[0].get('images', 'https://giphy.com/gifs/pokemon-friendship-high-five-10LKovKon8DENq').get('downsized', 'https://giphy.com/gifs/pokemon-friendship-high-five-10LKovKon8DENq').get('url', 'https://giphy.com/gifs/pokemon-friendship-high-five-10LKovKon8DENq')
+    default_friends = "https://media3.giphy.com/media/VduFvPwm3gfGO8duNN/giphy.gif?cid=5a8f66bf52o5um5m3qd90itix0abmmeuhi6fobomohduslx3&rid=giphy.gif"
+    try:
+        gif_URL = giphy_response.get('data', default_friends)[0].get('images', default_friends).get('downsized', default_friends).get('url', default_friends)
+    except AttributeError:
+        gif_URL = default_friends
     return gif_URL
 
 
 @app.route('/')
 def main():
-    print("IN MAIN")
     if date.today().weekday() == 2:
-        print('its tues!!!')
+        print('its game time!!!')
         monday()
-        print('boutta sleep')
-        time.sleep(5)
-        print('nah jk im up')
+        print('quick nap')
+        time.sleep(7200) # wait two hours
+        print('back at em')
         matchmaker()
-    
     return "Hello, friendbot!"
 
 if __name__ == "__main__":
