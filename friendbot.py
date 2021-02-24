@@ -161,3 +161,6 @@ def main():
         matchmaker()
     
     return "Hello, friendbot!"
+
+if __name__ == "__main__":
+    main()
