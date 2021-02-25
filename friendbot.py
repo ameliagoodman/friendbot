@@ -13,47 +13,47 @@ match_bbs = set()
 
 @app.route('/make-friends', methods=['GET', 'POST'])
 def monday():
-    match_bbs.clear()
-    print("just checking empty matches: ")
-    print(match_bbs)
-    slack_payload = { "blocks": [
-		    {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "Hi friends! Do you have time for a 30 minute chat with a friend this week? Let me know soon, matches will be made in 1 hour :time:"
-                }
-            },
-            {
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Sure do! 🥰",
-                            "emoji": True
-                        },
-                        "value": "yes",
-                        "style": "primary",
-                    },
-                    {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Too busy ❌",
-                            "emoji": True
-                        },
-                        "style": "danger",
-                        "value": "no"
+    if date.today().weekday() == 3:
+        print('its game time!!!')
+        match_bbs.clear()
+        slack_payload = { "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Hi friends! Do you have time for a 30 minute chat with a friend this week? Let me know soon, matches will be made in 1 hour :time:"
                     }
-                ]
-            }
-        ]
-    }
-    FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    r = requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
-    print("send init msg response: " + r.status_code)
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Sure do! 🥰",
+                                "emoji": True
+                            },
+                            "value": "yes",
+                            "style": "primary",
+                        },
+                        {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Too busy ❌",
+                                "emoji": True
+                            },
+                            "style": "danger",
+                            "value": "no"
+                        }
+                    ]
+                }
+            ]
+        }
+        FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
+        r = requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
+        print("send init msg response: %s" % r.status_code)
     return 'Hello, Bot!'
 
 @app.route('/enroll', methods=['GET', 'POST'])
@@ -70,10 +70,10 @@ def enroll():
         print("rejected: " + data['user']['username'])
         send_back = {"text": "No worries. I'll check back in next week 🥰"}
     send_back['response_type'] = "ephemeral"
+    send_back['replace_original'] = False
     r = requests.post(data['response_url'], json=send_back)
-    print("send ack response json: ")
-    print(r.json)
-    print("send ack response code: " + r.status_code)
+    
+    print("send ack response code: %s" % r.status_code)
     return 'enrolled'
 
 emojis = [":star_cat: :sunglassesdog:", ":starspin: :rainbow2:", ":heart_face: :heart_eyes_cat:", ":cow: :cowboy:",":garfield_sunglasses: :odie:", ":leftshark-401: :dancingpenguin:"]
@@ -147,8 +147,7 @@ def matchmaker():
 
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
     r = requests.post(FRIENDBOT_CHANNEL, json=send_matches)
-    print("response code: " + r.status_code) 
-    print("response json: " + r.json)
+    print("response code: %s" % r.status_code)
     return "matches made"     
 
 
@@ -167,13 +166,6 @@ def get_gif():
 
 @app.route('/')
 def main():
-    if date.today().weekday() == 2:
-        print('its game time!!!')
-        monday()
-        print('quick nap')
-        time.sleep(1800) # wait half hour
-        print('back at em')
-        matchmaker()
     return "Hello, friendbot!"
 
 if __name__ == "__main__":
