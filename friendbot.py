@@ -12,16 +12,16 @@ app = Flask(__name__)
 
 @app.route('/make-friends', methods=['GET', 'POST'])
 def monday():
-    if date.today().weekday() == 3:
+    if date.today().weekday() == 0:
         r = redis.from_url(os.getenv("REDIS_URL"))
         r.delete('enrolled')
-        print('its game time!!!')
+        print("it's game time!!!")
         slack_payload = { "blocks": [
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "Hi friends! Do you have time for a 30 minute chat with a friend this week? Let me know soon, matches will be made in 1 hour :time:"
+                        "text": "Hi @channel friends! Do you have time for a 30 minute chat with a friend this week? Let me know soon, matches will be made in 1 hour :time:"
                     }
                 },
                 {
