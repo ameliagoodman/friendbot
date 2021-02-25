@@ -6,6 +6,7 @@ import requests
 import random
 import schedule
 import time
+import redis
 from flask import Flask, request
 app = Flask(__name__)
 
@@ -58,17 +59,25 @@ def monday():
 
 @app.route('/enroll', methods=['GET', 'POST'])
 def enroll():
+    r = redis.from_url(os.environ.get("REDIS_URL"))
     form = request.form.to_dict()['payload']
     data = json.loads(form)
-    if data['actions'][0]['value'] == 'yes':
-        match_bbs.add(data['user']['username'])
+    username = data['user']['username']
+    match_bbs = r.get('enrolled')
+    if data['actions'][0]['value'] == 'yes' and username not in match_bbs:
+        match_bbs.append(username)
+        r.set('enrolled', match_bbs)
         send_back = {"text": "Great! You'll be matched shortly."}
-        print("confirmed: " + data['user']['username'])
+        print("confirmed: " + username)
     else:
-        if data['user']['username'] in match_bbs:
+        if username in match_bbs:
             match_bbs.remove(data['user']['username'])
+            r.set('enrolled', match_bbs)
+            send_back = {"text": "Okey doke, you've been removed for this week. I'll check back in next week 🥰"}
+        else:
+            send_back = {"text": "No worries. I'll check back in next week 🥰"}
         print("rejected: " + data['user']['username'])
-        send_back = {"text": "No worries. I'll check back in next week 🥰"}
+    
     send_back['response_type'] = "ephemeral"
     send_back['replace_original'] = False
     r = requests.post(data['response_url'], json=send_back)
@@ -80,9 +89,11 @@ emojis = [":star_cat: :sunglassesdog:", ":starspin: :rainbow2:", ":heart_face: :
 
 @app.route('/make-matches', methods=['GET', 'POST'])
 def matchmaker():
+    r = redis.from_url(os.environ.get("REDIS_URL"))
+    match_bbs = r.get('enrolled')
     print("Make matches for:")
     print(match_bbs)
-    random_match_bbs = list(match_bbs)
+    random_match_bbs = match_bbs
     print("randomized list:")
     print(random_match_bbs)
     random.shuffle(random_match_bbs)
