@@ -10,13 +10,12 @@ import redis
 from flask import Flask, request
 app = Flask(__name__)
 
-match_bbs = set()
-
 @app.route('/make-friends', methods=['GET', 'POST'])
 def monday():
     if date.today().weekday() == 3:
+        r = redis.from_url(os.getenv("REDIS_URL"))
+        r.delete('enrolled')
         print('its game time!!!')
-        match_bbs.clear()
         slack_payload = { "blocks": [
                 {
                     "type": "section",
@@ -53,47 +52,42 @@ def monday():
             ]
         }
         FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-        r = requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
-        print("send init msg response: %s" % r.status_code)
+        resp = requests.post(FRIENDBOT_CHANNEL, json=slack_payload)
+        print("send init msg response: %s" % resp.status_code)
     return 'Hello, Bot!'
 
 @app.route('/enroll', methods=['GET', 'POST'])
 def enroll():
-    r = redis.from_url(os.environ.get("REDIS_URL"))
+    r = redis.from_url(os.getenv("REDIS_URL"))
     form = request.form.to_dict()['payload']
     data = json.loads(form)
     username = data['user']['username']
-    match_bbs = r.get('enrolled')
-    if data['actions'][0]['value'] == 'yes' and username not in match_bbs:
-        match_bbs.append(username)
-        r.set('enrolled', match_bbs)
+
+    if data['actions'][0]['value'] == 'yes':
+        r.sadd('enrolled', username)
         send_back = {"text": "Great! You'll be matched shortly."}
         print("confirmed: " + username)
     else:
-        if username in match_bbs:
-            match_bbs.remove(data['user']['username'])
-            r.set('enrolled', match_bbs)
-            send_back = {"text": "Okey doke, you've been removed for this week. I'll check back in next week 🥰"}
-        else:
-            send_back = {"text": "No worries. I'll check back in next week 🥰"}
+        r.srem('enrolled', username)
+        send_back = {"text": "No worries. I'll check back in next week 🥰"}
         print("rejected: " + data['user']['username'])
-    
+
     send_back['response_type'] = "ephemeral"
     send_back['replace_original'] = False
-    r = requests.post(data['response_url'], json=send_back)
+    resp = requests.post(data['response_url'], json=send_back)
     
-    print("send ack response code: %s" % r.status_code)
+    print("send ack response code: %s" % resp.status_code)
     return 'enrolled'
 
 emojis = [":star_cat: :sunglassesdog:", ":starspin: :rainbow2:", ":heart_face: :heart_eyes_cat:", ":cow: :cowboy:",":garfield_sunglasses: :odie:", ":leftshark-401: :dancingpenguin:"]
 
 @app.route('/make-matches', methods=['GET', 'POST'])
 def matchmaker():
-    r = redis.from_url(os.environ.get("REDIS_URL"))
-    match_bbs = r.get('enrolled')
+    r = redis.from_url(os.getenv("REDIS_URL"))
+    match_bbs = r.smembers('enrolled')
     print("Make matches for:")
     print(match_bbs)
-    random_match_bbs = match_bbs
+    random_match_bbs = list(match_bbs)
     print("randomized list:")
     print(random_match_bbs)
     random.shuffle(random_match_bbs)
@@ -118,7 +112,7 @@ def matchmaker():
         else:
             match_str = emojis[count]
         for username in match:
-            match_str = match_str + "@" + username + " +  "
+            match_str = match_str + "@" + username.decode("utf-8") + " +  "
         match_msg = match_msg + match_str[:len(match_str) - 3] + "\n"
         count += 1
 
@@ -157,8 +151,8 @@ def matchmaker():
     }
 
     FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    r = requests.post(FRIENDBOT_CHANNEL, json=send_matches)
-    print("response code: %s" % r.status_code)
+    resp = requests.post(FRIENDBOT_CHANNEL, json=send_matches)
+    print("response code: %s" % resp.status_code)
     return "matches made"     
 
 
