@@ -21,7 +21,7 @@ def monday():
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "Hi @channel friends! Do you have time for a 30 minute chat with a friend this week? Let me know soon, matches will be made in 1 hour :time:"
+                        "text": "Hi @channel friends! Do you have time for a 30 minute chat with a friend this week? Let me know by the end of the day, matches will go out Tuesday morning :time:"
                     }
                 },
                 {
@@ -83,77 +83,79 @@ emojis = [":star_cat: :sunglassesdog:", ":starspin: :rainbow2:", ":heart_face: :
 
 @app.route('/make-matches', methods=['GET', 'POST'])
 def matchmaker():
-    r = redis.from_url(os.getenv("REDIS_URL"))
-    match_bbs = r.smembers('enrolled')
-    print("Make matches for:")
-    print(match_bbs)
-    random_match_bbs = list(match_bbs)
-    print("randomized list:")
-    print(random_match_bbs)
-    random.shuffle(random_match_bbs)
-    random.shuffle(emojis)
-    matches = []
-    new_match = set()
-    
-    for bb in random_match_bbs:
-        new_match.add(bb)
-        if len(new_match) == 2:
-            matches.append(new_match)
-            new_match = set()
-    else:
-        if len(new_match) > 0 and len(matches) > 0:
-            matches[0] = matches[0].union(new_match)
-    
-    match_msg = ""
-    count = 0
-    for match in matches:
-        if len(match) > 2 :
-            match_str = ":partygritty: :partytanuki: :partycat:"
+    if date.today().weekday() == 1:
+        r = redis.from_url(os.getenv("REDIS_URL"))
+        match_bbs = r.smembers('enrolled')
+        print("Make matches for:")
+        print(match_bbs)
+        random_match_bbs = list(match_bbs)
+        print("randomized list:")
+        print(random_match_bbs)
+        random.shuffle(random_match_bbs)
+        random.shuffle(emojis)
+        matches = []
+        new_match = set()
+
+        for bb in random_match_bbs:
+            new_match.add(bb)
+            if len(new_match) == 2:
+                matches.append(new_match)
+                new_match = set()
         else:
-            match_str = emojis[count]
-        for username in match:
-            match_str = match_str + "@" + username.decode("utf-8") + " +  "
-        match_msg = match_msg + match_str[:len(match_str) - 3] + "\n"
-        count += 1
+            if len(new_match) > 0 and len(matches) > 0:
+                matches[0] = matches[0].union(new_match)
 
-    print("Matches made!\n" + match_msg)
-    gif = get_gif()
-    send_matches = { "blocks": [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": "This week's matches 🥳 🥰",
-                    "emoji": True
-                }
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": match_msg,
+        match_msg = ""
+        count = 0
+        for match in matches:
+            if len(match) > 2 :
+                match_str = ":partygritty: :partytanuki: :partycat:"
+            else:
+                match_str = emojis[count]
+            for username in match:
+                match_str = match_str + "@" + username.decode("utf-8") + " +  "
+            match_msg = match_msg + match_str[:len(match_str) - 3] + "\n"
+            count += 1
+
+        print("Matches made!\n" + match_msg)
+        gif = get_gif()
+        send_matches = { "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "This week's matches 🥳 🥰",
+                        "emoji": True
+                    }
                 },
-                "accessory": {
-                    "type": "image",
-                    "image_url": gif,
-                    "alt_text": "friendship gif"
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": match_msg,
+                    },
+                    "accessory": {
+                        "type": "image",
+                        "image_url": gif,
+                        "alt_text": "friendship gif"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Lucky you! A new friend! Please reach out to coordinate a time that works for you both by the end of the week. Next week you'll get a new friend",
+                        "emoji": True
+                    }
                 }
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Lucky you! A new friend! Please reach out to coordinate a time that works for you both by the end of the week. Next week you'll get a new friend",
-                    "emoji": True
-                }
-            }
-        ]
-    }
+            ]
+        }
 
-    FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
-    resp = requests.post(FRIENDBOT_CHANNEL, json=send_matches)
-    print("response code: %s" % resp.status_code)
-    return "matches made"     
+        FRIENDBOT_CHANNEL =  os.getenv("FRIENDBOT_CHANNEL")
+        resp = requests.post(FRIENDBOT_CHANNEL, json=send_matches)
+        print("response code: %s" % resp.status_code)
+        return "matches made"
+    return "not mondog"
 
 
 def get_gif():
